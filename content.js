@@ -69,8 +69,7 @@ function getSiteConfig() {
       password: "input[type='password'], input[name*='pass'], input[id*='pass']",
       confirmPassword: "input[name*='confirm'], input[id*='confirm'], input[placeholder*='confirm']",
       phone: "input[type='tel'], input[name*='phone'], input[id*='phone'], input[placeholder*='phone']",
-      terms: "input[id='agree'], label[for*='agree'], input[id$='_conditions']",
-      robot: "input[name*='robot'], input[id*='robot'], label[for*='robot']"
+      terms: "input[id='agree'], label[for*='agree'], input[id$='_conditions']"
     },
     otp: {
       inputSelectors: [
@@ -217,11 +216,6 @@ function autofillForm() {
 
       handleCheckboxes(config);
 
-      const robotEl = document.querySelector(config.selectors.robot);
-      if (robotEl) {
-        robotEl.click();
-        simulateEvents(robotEl);
-      }
 
       chrome.runtime.sendMessage({ type: "get-otp" }, ({ code }) => {
         if (code) {
@@ -233,56 +227,11 @@ function autofillForm() {
   });
 }
         
-
-// --- SHIKSHA SPECIAL FLOW ---
-function waitForOtpModalAndBypass() {
-  if (!window.location.hostname.includes("shiksha.com")) return;
-
-  console.log("👀 Waiting for OTP modal (Shiksha)...");
-
-  const checkModal = setInterval(() => {
-    const otpModalText = document.querySelector('div.verify-mobile-layer, div.verifyMobile-layer, div.reverificationAlignClass');
-
-    if (otpModalText && otpModalText.textContent.toLowerCase().includes('one time password')) {
-      console.log("✅ OTP Modal detected!");
-
-      const closeBtn = document.querySelector('.cross-x');
-      if (closeBtn) {
-        console.log("❌ Clicking Cross button...");
-        closeBtn.click();
-      } else {
-        console.log("⚠️ Cross button not found yet. Will retry...");
-      }
-
-      const waitForSkip = setInterval(() => {
-        const skipBtn = Array.from(document.querySelectorAll('strong')).find(el => el.textContent.trim().toLowerCase() === 'skip');
-
-        if (skipBtn) {
-          console.log("➡️ Skip button detected! Clicking Skip...");
-          skipBtn.click();
-          clearInterval(waitForSkip);
-        } else {
-          console.log("🔄 Waiting for Skip button...");
-        }
-      }, 500);
-
-      clearInterval(checkModal);
-    } else {
-      console.log("🔎 Still waiting for OTP text...");
-    }
-  }, 1000);
-
-  setTimeout(() => {
-    clearInterval(checkModal);
-  }, 20000);
-}
-
 // --- INIT EVERYTHING ---
 window.addEventListener("load", () => {
   console.log("🌟 Page Loaded, starting...");
 
   setTimeout(() => {
     autofillForm();
-    waitForOtpModalAndBypass();
   }, 2000);
 });
